@@ -102,9 +102,7 @@ export function saveCarcaraSession(session: CarcaraSession, homeDir?: string): v
   mkdirSync(dir, { recursive: true, mode: 0o700 });
   try {
     chmodSync(dir, 0o700);
-  } catch {
-    // best-effort
-  }
+  } catch {}
   const target = join(dir, carcaraSessionFileName(session.baseUrl));
   const tmp = `${target}.tmp.${process.pid}.${randomBytes(4).toString('hex')}`;
   const data = Buffer.from(`${JSON.stringify(session, null, 2)}\n`, 'utf-8');
@@ -124,9 +122,7 @@ export function saveCarcaraSession(session: CarcaraSession, homeDir?: string): v
   } catch (error) {
     try {
       unlinkSync(tmp);
-    } catch {
-      // ignore
-    }
+    } catch {}
     throw error;
   }
 }
@@ -156,9 +152,7 @@ export function deleteCarcaraSession(baseUrl?: string, homeDir?: string): boolea
     try {
       unlinkSync(join(dir, name));
       removed = true;
-    } catch {
-      // continue removing the rest
-    }
+    } catch {}
   }
   return removed;
 }
@@ -209,7 +203,7 @@ export async function loginCarcara(
     throw new CarcaraLoginError('Carcará login returned a non-JSON response');
   }
 
-  if (!isRecord(raw) || String(raw['status'] ?? '').toLowerCase() !== 'ok') {
+  if (!isRecord(raw) || typeof raw['status'] !== 'string' || raw['status'].toLowerCase() !== 'ok') {
     throw new CarcaraLoginError(`Carcará login rejected: ${JSON.stringify(raw)}`);
   }
 

@@ -728,11 +728,7 @@ export class AuthSummaryService implements IAuthSummaryService {
         if (nonEmpty(token) !== undefined) return;
         throw new AuthTokenMissingError(providerKey);
       }
-      // Carcará authenticates with a PHPSESSID cookie instead of an API key or
-      // OAuth token. The credential gate would otherwise reject the provider
-      // even when a saved session exists. Treat a persisted session as the
-      // credential so the agent can actually start.
-      if (providerName === 'carcara' && (await carcaraSessionAvailable()) === true) return;
+      if (providerName === 'carcara' && carcaraSessionAvailable()) return;
       throw new AuthTokenMissingError(providerName);
     } catch (error) {
       this.telemetry.track2('auth_ensure_ready_failed', {
@@ -769,11 +765,6 @@ function ensureReadyFailureReason(
   return undefined;
 }
 
-/**
- * Returns true when a persisted Carcará session exists. Carcará authenticates
- * with a PHPSESSID cookie, so this stands in for a conventional API-key / OAuth
- * credential in the readiness gate.
- */
 function carcaraSessionAvailable(): boolean {
   try {
     return loadCarcaraSession() !== undefined;
