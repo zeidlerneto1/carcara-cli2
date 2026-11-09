@@ -1,5 +1,7 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 
+import type { RequestJournal } from './services/requestJournal';
+
 export function extractEnvelopeCode(payload: unknown): number | undefined {
   if (typeof payload !== 'string') {
     return undefined;
@@ -12,7 +14,27 @@ export function extractEnvelopeCode(payload: unknown): number | undefined {
   return Number.isSafeInteger(code) ? code : undefined;
 }
 
-export function registerRequestLogging(app: FastifyInstance): void {
+const SESSION_ID_PATH_RE = /\/api\/v\d+\/sessions\/([^/?#]+)/;
+
+export function extractSessionIdFromUrl(rawUrl: string): string | undefined {
+  let path = rawUrl.split('?', 1)[0] ?? rawUrl;
+  try {
+    path = decodeURIComponent(path);
+  } catch {
+    return undefined;
+  }
+  const match = SESSION_ID_PATH_RE.exec(path);
+  return match === null ? undefined : match[1];
+}
+
+export interface RequestLoggingOptions {
+  readonly journal?: RequestJournal;
+}
+
+export function registerRequestLogging(
+  app: FastifyInstance,
+  opts: RequestLoggingOptions = {},
+): void {
   const codes = new WeakMap<FastifyReply, number>();
 
   app.addHook('onSend', (req, reply, payload, done) => {
@@ -24,6 +46,7 @@ export function registerRequestLogging(app: FastifyInstance): void {
   });
 
   app.addHook('onResponse', (req, reply, done) => {
+    const code = codes.get(reply);
     req.log.info(
       {
         req: {
@@ -34,11 +57,23 @@ export function registerRequestLogging(app: FastifyInstance): void {
           remoteAddress: req.ip,
           remotePort: req.socket === undefined ? undefined : req.socket.remotePort,
         },
-        code: codes.get(reply),
+        code,
         responseTime: reply.elapsedTime,
       },
       'request completed',
     );
+    opts.journal?.append({
+      kind: 'http',
+      ts: Date.now(),
+      method: req.method,
+      url: req.url,
+      status: code,
+      responseTimeMs: reply.elapsedTime,
+      remoteAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+      requestId: req.id,
+      sessionId: extractSessionIdFromUrl(req.url),
+    });
     done();
   });
 }

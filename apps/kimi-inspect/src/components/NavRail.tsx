@@ -9,6 +9,7 @@ import type { ReactNode } from 'react';
 export type AppView =
   | 'chat'
   | 'search'
+  | 'requests'
   | 'models'
   | 'services'
   | 'workspace'
@@ -50,6 +51,16 @@ const VIEWS: readonly ViewDef[] = [
       <svg {...iconProps}>
         <circle cx="11" cy="11" r="8" />
         <path d="m21 21-4.3-4.3" />
+      </svg>
+    ),
+  },
+  {
+    id: 'requests',
+    title: 'Requests',
+    icon: (
+      <svg {...iconProps}>
+        <path d="M3 3v18h18" />
+        <path d="m7 15 4-5 3 3 5-6" />
       </svg>
     ),
   },

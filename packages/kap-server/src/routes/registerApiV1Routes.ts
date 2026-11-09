@@ -24,6 +24,7 @@ import { registerGuiStoreRoutes } from './guiStore';
 import { registerMessagesRoutes } from './messages';
 import type { IGuiStoreService } from '../services/guiStore/guiStore';
 import { registerDebugRoutes } from '../transport/registerDebugRoutes';
+import type { RequestJournal } from '../services/requestJournal';
 import { registerMetaRoute } from './meta';
 import { registerModelCatalogRoutes } from './modelCatalog';
 import { registerOAuthRoutes } from './oauth';
@@ -66,6 +67,7 @@ export interface RegisterApiV1RoutesOptions {
   readonly serverVersion: string;
   readonly hostIdentity: KimiHostIdentity;
   readonly debugEndpoints?: boolean;
+  readonly requestJournal?: RequestJournal;
   readonly enableShutdown?: boolean;
   readonly enableTerminals?: boolean;
   readonly guiStore: IGuiStoreService;
@@ -91,7 +93,11 @@ export async function registerApiV1Routes(
       registerHealthRoute(apiV1);
 
       if (opts.debugEndpoints === true) {
-        registerDebugRoutes(apiV1 as unknown as Parameters<typeof registerDebugRoutes>[0], core);
+        registerDebugRoutes(
+          apiV1 as unknown as Parameters<typeof registerDebugRoutes>[0],
+          core,
+          { requestJournal: opts.requestJournal },
+        );
       }
 
       registerMetaRoute(apiV1, {

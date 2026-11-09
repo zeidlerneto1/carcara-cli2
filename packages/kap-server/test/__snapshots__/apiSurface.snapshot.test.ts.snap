@@ -82,6 +82,10 @@ exports[`API surface snapshot > matches the documented v2 route table and meta e
     ],
     [
       "GET",
+      "/api/v1/debug/requests",
+    ],
+    [
+      "GET",
       "/api/v1/debug/session/{session_id}/{service}/{method}",
     ],
     [

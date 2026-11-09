@@ -65,7 +65,7 @@ describe('requestLogging', () => {
 
     const completed = parseEntries(lines).filter((entry) => entry['msg'] === 'request completed');
     expect(completed.length).toBeGreaterThanOrEqual(1);
-    const entry = completed[completed.length - 1];
+    const entry = completed.at(-1);
     assert(entry !== undefined);
 
     expect(entry['code']).toBe(0);
@@ -73,6 +73,70 @@ describe('requestLogging', () => {
     expect(entry['res']).toBeUndefined();
     expect(entry['req']).toMatchObject({ method: 'GET', url: '/api/v1/healthz' });
     expect(typeof entry['responseTime']).toBe('number');
+  });
+});
+
+describe('requestJournal', () => {
+  let server: RunningServer | undefined;
+  let home: string | undefined;
+
+  beforeAll(async () => {
+    home = await mkdtemp(join(tmpdir(), 'kimi-server-v2-request-journal-'));
+    server = await startServer({
+      hostIdentity: TEST_HOST_IDENTITY,
+      host: '127.0.0.1',
+      port: 0,
+      homeDir: home,
+      logLevel: 'silent',
+      debugEndpoints: true,
+    });
+  });
+
+  afterAll(async () => {
+    if (server !== undefined) {
+      await server.close();
+      server = undefined;
+    }
+    if (home !== undefined) {
+      await rm(home, { recursive: true, force: true });
+      home = undefined;
+    }
+  });
+
+  it('records http requests and serves them from /debug/requests', async () => {
+    assert(server !== undefined);
+    const base = `http://127.0.0.1:${String(server.port)}`;
+    const token = server.authTokenService.getToken();
+    const headers = { authorization: `Bearer ${token}` };
+
+    await fetch(`${base}/api/v1/healthz`, { headers });
+
+    const res = await fetch(`${base}/api/v1/debug/requests`, { headers });
+    expect(res.status).toBe(200);
+    const envelope = (await res.json()) as { code: number; msg: string; data: unknown[] };
+    expect(envelope.code).toBe(0);
+    expect(Array.isArray(envelope.data)).toBe(true);
+    const httpEntries = envelope.data.filter(
+      (entry) => (entry as { kind?: string }).kind === 'http',
+    );
+    expect(httpEntries.length).toBeGreaterThanOrEqual(1);
+    const health = httpEntries.find((entry) => (entry as { url?: string }).url === '/api/v1/healthz');
+    expect(health).toBeDefined();
+  });
+
+  it('filters the journal by kind and session id', async () => {
+    assert(server !== undefined);
+    const base = `http://127.0.0.1:${String(server.port)}`;
+    const token = server.authTokenService.getToken();
+    const headers = { authorization: `Bearer ${token}` };
+
+    const res = await fetch(`${base}/api/v1/debug/requests?kind=llm`, { headers });
+    expect(res.status).toBe(200);
+    const envelope = (await res.json()) as { code: number; msg: string; data: unknown[] };
+    expect(envelope.code).toBe(0);
+    for (const entry of envelope.data) {
+      expect((entry as { kind?: string }).kind).toBe('llm');
+    }
   });
 });
 

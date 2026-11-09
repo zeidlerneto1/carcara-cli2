@@ -97,6 +97,8 @@ import { resolvePasswordHash } from './services/auth/password';
 import { createTokenStore } from './services/auth/tokenStore';
 
 import { drainGlobalSearchDisposals, IGlobalSearchService } from './search/searchService';
+import { RequestJournal } from './services/requestJournal';
+import { LlmRequestJournalReconciler } from './services/llmRequestJournal';
 
 export interface ServerHostIdentity extends KimiHostIdentity {
   readonly displayName?: string;
@@ -305,7 +307,12 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
     genReqId: (req) => resolveRequestId(req.headers),
   }) as unknown as FastifyInstance;
   app.server.requestTimeout = 0;
-  registerRequestLogging(app);
+  const requestJournal = debugEndpoints ? new RequestJournal() : undefined;
+  const llmJournalReconciler =
+    debugEndpoints && requestJournal !== undefined
+      ? new LlmRequestJournalReconciler(core, requestJournal)
+      : undefined;
+  registerRequestLogging(app, { journal: requestJournal });
   app.setValidatorCompiler(() => () => true);
   app.setSerializerCompiler(() => (data) => JSON.stringify(data));
   installErrorHandler(app);
@@ -345,6 +352,7 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
     capabilityInstallSubscription.dispose();
     authFailureLimiter?.dispose();
     modelCatalogRefreshScheduler.dispose();
+    llmJournalReconciler?.stop();
     await sessionIdleReaper.close();
     try {
       await shutdownServerTelemetry(telemetry);
@@ -469,6 +477,7 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
     serverVersion,
     hostIdentity: opts.hostIdentity,
     debugEndpoints,
+    requestJournal,
     enableShutdown,
     enableTerminals,
     guiStore,
@@ -641,6 +650,7 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
     );
   });
   sessionIdleReaper.start();
+  llmJournalReconciler?.start();
 
   process.on('unhandledRejection', onUnhandledRejection);
   process.on('uncaughtException', onUncaughtException);

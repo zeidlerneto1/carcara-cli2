@@ -30,6 +30,7 @@ import { DiInspectionView } from './components/DiInspectionView';
 import { FsSuggestView } from './components/FsSuggestView';
 import { ModelCatalogView } from './components/ModelCatalogView';
 import { NavRail, type AppView } from './components/NavRail';
+import { RequestsView } from './components/RequestsView';
 import { RightPanel } from './components/RightPanel';
 import { SearchView } from './components/SearchView';
 import { ServerSwitcher } from './components/ServerSwitcher';
@@ -124,6 +125,8 @@ export function App() {
           <BashParserView />
         ) : view === 'di' ? (
           <DiInspectionView />
+        ) : view === 'requests' ? (
+          <RequestsView />
         ) : view === 'models' ? (
           <ModelCatalogView
             onOpenSession={(id) => {
