@@ -11,3 +11,14 @@ catalog:
 overrides:
   "kimi-code>@tailwindcss/vite": "4.1.18"
   "kimi-code>tailwindcss": "4.1.18"
+
+onlyBuiltDependencies:
+  - "@vscode/vsce-sign"
+  - "core-js"
+  - "core-js-pure"
+  - "esbuild"
+  - "keytar"
+  - "msw"
+  - "node-pty"
+  - "protobufjs"
+  - "tree-sitter-bash"
