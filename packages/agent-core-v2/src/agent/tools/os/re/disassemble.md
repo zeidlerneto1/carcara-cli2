@@ -1,0 +1,1 @@
+Disassemble a binary by delegating to `objdump`. Auto-detects the format (ELF or PE) and architecture/endianness from the binary headers; a `.text`-relative virtual address or a raw file offset selects the start point. Emits each instruction as `address  bytes  mnemonic operands`. Use after BinIdent to confirm the format, and BinStrings for embedded data.
