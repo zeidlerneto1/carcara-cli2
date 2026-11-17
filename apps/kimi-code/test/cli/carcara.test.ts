@@ -178,6 +178,29 @@ describe('handleCarcaraLogin', () => {
     expect(exitCodes).toEqual([1]);
     expect(stderr.join('')).toContain('Missing Carcará username');
   });
+
+  it('configures the provider without authentication when --dev is set', async () => {
+    const { harness, current, setConfigCalls } = makeHarness({ providers: {} } as KimiConfig);
+    const { deps, stdout, exitCodes } = makeDeps(harness);
+
+    await tryRun(() => handleCarcaraLogin(deps, { dev: true }));
+
+    expect(exitCodes).toEqual([]);
+    const provider = current().providers['carcara'];
+    expect(provider).toMatchObject({
+      type: 'carcara',
+      baseUrl: BASE_URL,
+    });
+    expect(provider?.customHeaders).not.toHaveProperty('Cookie');
+    expect(provider?.customHeaders).toMatchObject({
+      Accept: '*/*',
+      Referer: 'https://carcara.sinapad.lncc.br/service/',
+      Origin: 'https://carcara.sinapad.lncc.br',
+    });
+    expect(current().defaultModel).toBe('carcara/deepseek');
+    expect(setConfigCalls[0]?.defaultModel).toBe('carcara/deepseek');
+    expect(stdout.join('')).toContain('without authentication');
+  });
 });
 
 describe('handleCarcaraLogout', () => {

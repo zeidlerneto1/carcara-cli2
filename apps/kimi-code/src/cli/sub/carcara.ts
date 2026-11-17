@@ -1,7 +1,7 @@
 import { createInterface } from 'node:readline/promises';
 
 import { createKimiHarness, type KimiConfig, type KimiHarness } from '@moonshot-ai/kimi-code-sdk';
-import type { Command } from 'commander';
+import { Option, type Command } from 'commander';
 
 import { createKimiCodeHostIdentity } from '#/cli/host-identity';
 
@@ -22,6 +22,7 @@ interface CarcaraLoginOptions {
   readonly password?: string;
   readonly domain?: string;
   readonly baseUrl?: string;
+  readonly dev?: boolean;
 }
 
 interface CarcaraLogoutOptions {
@@ -34,8 +35,22 @@ export async function handleCarcaraLogin(
   deps: CarcaraDeps,
   opts: CarcaraLoginOptions,
 ): Promise<void> {
-  const user = opts.user ?? deps.env['CARCARA_USER'];
   const baseUrl = opts.baseUrl ?? deps.env['CARCARA_BASE_URL'] ?? CARCARA_DEFAULT_BASE_URL;
+  const harness = deps.getHarness();
+  await harness.ensureConfigFile();
+  const config = await harness.getConfig();
+
+  if (opts.dev) {
+    await configureCarcara(config, harness, {
+      type: 'carcara',
+      baseUrl,
+      customHeaders: { ...(await carcaraBrowserHeaders()) },
+    });
+    deps.stdout.write('Configured Carcará provider without authentication.\n');
+    return;
+  }
+
+  const user = opts.user ?? deps.env['CARCARA_USER'];
   const domain = opts.domain ?? 'LNCC';
 
   if (user === undefined || user.trim().length === 0) {
@@ -58,10 +73,6 @@ export async function handleCarcaraLogin(
     deps.exit(1);
   }
 
-  const harness = deps.getHarness();
-  await harness.ensureConfigFile();
-  const config = await harness.getConfig();
-
   const carcaraModule = await import('@moonshot-ai/agent-core-v2/llm-adapter/carcara/session');
   const origin = carcaraModule.carcaraOrigin(session.baseUrl);
   const carcaraProvider: KimiConfig['providers'][string] = {
@@ -76,6 +87,22 @@ export async function handleCarcaraLogin(
       Cookie: `PHPSESSID=${session.phpsessid}`,
     },
   };
+  await configureCarcara(config, harness, carcaraProvider);
+  carcaraModule.saveCarcaraSession(session);
+
+  deps.stdout.write(`Logged in to Carcará (${session.baseUrl}) as ${session.user}.\n`);
+  deps.stdout.write(
+    config.defaultModel === undefined
+      ? 'Set default model to carcara/deepseek.\n'
+      : 'Provider "carcara" configured. Set default_model in config.toml to use it.\n',
+  );
+}
+
+async function configureCarcara(
+  config: KimiConfig,
+  harness: KimiHarness,
+  carcaraProvider: KimiConfig['providers'][string],
+): Promise<void> {
   const providers = {
     ...config.providers,
     carcara: carcaraProvider,
@@ -100,15 +127,13 @@ export async function handleCarcaraLogin(
     models,
     ...(config.defaultModel === undefined ? { defaultModel: 'carcara/deepseek' } : {}),
   });
+}
 
-  carcaraModule.saveCarcaraSession(session);
-
-  deps.stdout.write(`Logged in to Carcará (${session.baseUrl}) as ${session.user}.\n`);
-  deps.stdout.write(
-    config.defaultModel === undefined
-      ? 'Set default model to carcara/deepseek.\n'
-      : 'Provider "carcara" configured. Set default_model in config.toml to use it.\n',
+async function carcaraBrowserHeaders(): Promise<Record<string, string>> {
+  const { CARCARA_BROWSER_HEADERS } = await import(
+    '@moonshot-ai/agent-core-v2/llm-adapter/carcara/session'
   );
+  return CARCARA_BROWSER_HEADERS;
 }
 
 export async function handleCarcaraLogout(
@@ -135,6 +160,7 @@ export function registerCarcaraCommand(parent: Command, deps?: Partial<CarcaraDe
       '--base-url <url>',
       `Carcará base URL. Defaults to ${CARCARA_DEFAULT_BASE_URL}.`,
     )
+    .addOption(new Option('--dev', 'Configure without authentication').hideHelp())
     .action(async (options: CarcaraLoginOptions) => {
       const resolved = resolveDeps(deps);
       try {
