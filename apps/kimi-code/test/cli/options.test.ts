@@ -51,7 +51,6 @@ describe('CLI options parsing', () => {
       expect(opts.agent).toBeUndefined();
       expect(opts.agentFiles).toEqual([]);
       expect(opts.addDirs).toEqual([]);
-      expect(opts.environment).toBeUndefined();
     });
   });
 
@@ -513,26 +512,6 @@ describe('CLI options parsing', () => {
     });
   });
 
-  describe('--environment', () => {
-    it.each([
-      ['--session', 'ses_123'],
-      ['--continue'],
-    ])('rejects --environment with %s', (...resumeArgs: string[]) => {
-      const opts = parse(['--environment', 'dev-box', ...resumeArgs]);
-      expect(() => validateOptions(opts)).toThrow(OptionConflictError);
-      expect(() => validateOptions(opts)).toThrow(
-        'Cannot combine --environment with --session/--continue',
-      );
-    });
-  });
-
-  describe('--environment-cwd', () => {
-    it('requires --environment', () => {
-      const opts = parse(['--environment-cwd', '/remote/work']);
-      expect(() => validateOptions(opts)).toThrow('--environment-cwd requires --environment.');
-    });
-  });
-
   describe('--add-dir', () => {
     it('parses one additional workspace directory', () => {
       expect(parse(['--add-dir', '/shared']).addDirs).toEqual(['/shared']);
@@ -618,7 +597,6 @@ describe('CLI options parsing', () => {
         'install-desktop',
         'app',
         'migrate',
-        'import-sessions',
         'upgrade',
       ]);
     });

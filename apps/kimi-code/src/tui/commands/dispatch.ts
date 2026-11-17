@@ -1,8 +1,6 @@
 import type { Component, Focusable } from '@moonshot-ai/pi-tui';
 import type { DeviceAuthorization } from '@moonshot-ai/kimi-code-oauth';
-import type { ReverseRpcModalOwner } from '../reverse-rpc/modal-coordinator';
-
-import type { KimiHarness, Session, ThinkingEffort } from '@moonshot-ai/kimi-code-sdk';
+import type { KimiHarness, Session } from '@moonshot-ai/kimi-code-sdk';
 
 import type { ColorToken, ThemeName } from '#/tui/theme';
 
@@ -19,7 +17,6 @@ import type {
   AppState,
   InlineSkillActivation,
   LoginProgressSpinnerHandle,
-  ModelSwitchPersistence,
   QueuedMessage,
   TranscriptEntry,
 } from '../types';
@@ -42,7 +39,6 @@ import {
   showSettingsSelector,
 } from './config';
 import { handleGoalCommand } from './goal';
-import { handleImportSessionsCommand } from './import-sessions';
 import { handleFeedbackCommand, showMcpServers, showStatusReport, showUsage } from './info';
 import { handleAddDirCommand } from './add-dir';
 import { handleCarcaraCommand } from './carcara';
@@ -132,12 +128,7 @@ export interface SlashCommandHost {
   showNotice(title: string, detail?: string): void;
   appendTranscriptEntry(entry: TranscriptEntry): void;
   track(event: string, props?: Record<string, unknown>): void;
-  mountEditorReplacement(
-    panel: Component & Focusable,
-    onDisplaced?: () => void,
-    onReplaced?: () => void,
-    owner?: ReverseRpcModalOwner,
-  ): void;
+  mountEditorReplacement(panel: Component & Focusable, onDisplaced?: () => void): void;
   restoreEditor(): void;
   restoreInputText(text: string): void;
   refreshSlashCommandAutocomplete(): void;
@@ -155,10 +146,10 @@ export interface SlashCommandHost {
   /**
    * Seed appState with the config defaults the v2 engine would apply at
    * createSession time (model, permission, plan mode, thinking effort,
-   * context cap). Only call it while session-less; `includeModel: false`
-   * refreshes the other defaults without changing the pending model choice.
+   * context cap). No-op semantics on a live session path: only /reload calls
+   * it while still session-less.
    */
-  hydrateLazyConfigDefaults(includeModel?: boolean): Promise<void>;
+  hydrateLazyConfigDefaults(): Promise<void>;
 
   // Session
   requireSession(): Session;
@@ -177,22 +168,16 @@ export interface SlashCommandHost {
   beginSessionRequest(): void;
   failSessionRequest(message: string): void;
   sendQueuedMessage(session: Session, item: QueuedMessage): void;
-  drainQueueIfIdle(): void;
-  completedCompactionSerial: number;
   /** Queue a `/compact` for FIFO dispatch; false when one is already queued. */
   enqueueCompactCommand(args: string): boolean;
-  enqueueModelSwitch(
-    alias: string,
-    thinking: ThinkingEffort,
-    persist: ModelSwitchPersistence,
-  ): void;
   requestQueuedGoalPromotion?(): void;
+  /** Reset the client-side cache-break baseline after the context was cut
+   *  (/undo): the next step's cache-read drop is expected, not a break. */
+  noteContextCut?(): void;
 
   // UI
   showLoginProgressSpinner(label: string): LoginProgressSpinnerHandle;
   showLoginAuthorizationPrompt(auth: DeviceAuthorization): LoginProgressSpinnerHandle;
-  beginAuthBlock(): () => void;
-  setAuthRequired(required: boolean): void;
   showProgressSpinner(label: string): LoginProgressSpinnerHandle;
 
   // Theme
@@ -545,9 +530,6 @@ async function handleBuiltInSlashCommand(
       return;
     case 'export-debug-zip':
       await handleExportDebugZipCommand(host);
-      return;
-    case 'import-sessions':
-      handleImportSessionsCommand(host);
       return;
     case 'copy':
       await handleCopyCommand(host);

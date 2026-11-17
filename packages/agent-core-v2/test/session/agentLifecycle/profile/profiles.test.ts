@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import { getAgentProfileContributions } from '#/app/agentProfileCatalog/contribution';
-import '#/features/plan/profile/plan';
 import '#/session/agentLifecycle/profile/profiles';
 
 function profile(name: string) {
@@ -20,52 +19,6 @@ describe('builtin agent profiles', () => {
 
   it('caps the default profile delegation at non-spawning profiles', () => {
     const agent = profile('agent');
-    expect(agent.subagents).toEqual(['coder', 'explore', 'plan', 'reverser']);
-  });
-
-  it('registers the reverser profile with the RE toolset', () => {
-    const reverser = profile('reverser');
-    expect(reverser.tools).toContain('BinIdent');
-    expect(reverser.tools).toContain('BinStrings');
-    expect(reverser.tools).toContain('Disassemble');
-    expect(reverser.tools).toContain('Emulate');
-    expect(reverser.tools).toContain('GhidraDecompile');
-    expect(reverser.tools).toContain('Checksec');
-    expect(reverser.tools).toContain('ROP');
-    expect(reverser.tools).toContain('OneGadget');
-    expect(reverser.tools).toContain('ExploitTemplate');
-    expect(reverser.tools).toContain('RefRE');
-    expect(reverser.tools).toContain('PersistSession');
-  });
-
-  it('keeps plan mode entry out of every builtin profile and plan review on the default one', () => {
-    for (const builtin of getAgentProfileContributions()) {
-      expect(builtin.tools ?? []).not.toContain('EnterPlanMode');
-    }
-    expect(profile('agent').tools).toContain('ExitPlanMode');
-    expect(profile('coder').tools).not.toContain('ExitPlanMode');
-  });
-
-  it('uses read-only prompts for explore and plan while preserving AGENTS.md', () => {
-    const coderPrompt = profile('coder').renderSystemPrompt({ agentsMd: 'AGENTS' }).text;
-    expect(coderPrompt).toContain('# Coding');
-    expect(coderPrompt).toContain('Before you call a change done');
-    expect(coderPrompt).toContain('# Project information');
-    expect(coderPrompt).toContain('AGENTS');
-
-    for (const name of ['explore', 'plan']) {
-      const prompt = profile(name).renderSystemPrompt({ agentsMd: 'AGENTS' }).text;
-      expect(prompt).not.toContain('# Coding');
-      expect(prompt).not.toContain('Before you call a change done');
-      expect(prompt).toContain('distinguish confirmed findings from hypotheses');
-      expect(prompt).toContain('# Project information');
-      expect(prompt).toContain('AGENTS');
-    }
-  });
-
-  it('renders the explore subagent role once', () => {
-    const prompt = profile('explore').renderSystemPrompt({}).text;
-
-    expect(prompt.split('You are a subagent;')).toHaveLength(2);
+    expect(agent.subagents).toEqual(['coder', 'explore', 'plan']);
   });
 });

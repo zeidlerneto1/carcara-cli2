@@ -16,7 +16,7 @@ import {
 import { IAgentProfileRegistry } from '#/app/agentProfileCatalog/agentProfileRegistry';
 import { BuiltinAgentProfileLoaderService } from '#/app/agentProfileCatalog/builtinAgentProfileLoaderService';
 import { registerAgentProfile } from '#/app/agentProfileCatalog/contribution';
-import type { ToolCall } from '#human/message';
+import type { ToolCall } from '#human/llm/message';
 import { IAgentProfileService, type ResolvedAgentProfile } from '#/agent/profile/profile';
 import type { WatchChange } from '#human/utils/watch';
 import { IAgentAgentsMdReminderService } from '#/agent/agentsMdReminder/agentsMdReminder';
@@ -145,7 +145,7 @@ describe('AgentProfileService.bind', () => {
 
     await svc.bind({ profile: DEFAULT_AGENT_PROFILE_NAME, model: MOCK_MODEL });
 
-    expect(svc.data().subagents).toEqual(['coder', 'explore', 'plan', 'reverser', 'code-reviewer']);
+    expect(svc.data().subagents).toEqual(['coder', 'explore', 'plan', 'code-reviewer']);
   });
 
   it('recomputes the bound subagent allowlist when the catalog gains a profile after bind', async () => {
@@ -154,7 +154,7 @@ describe('AgentProfileService.bind', () => {
     const svc = ctx.get(IAgentProfileService);
 
     await svc.bind({ profile: DEFAULT_AGENT_PROFILE_NAME, model: MOCK_MODEL });
-    expect(svc.data().subagents).toEqual(['coder', 'explore', 'plan', 'reverser']);
+    expect(svc.data().subagents).toEqual(['coder', 'explore', 'plan']);
 
     ctx.get(IAgentProfileRegistry).register({
       sourceId: 'workspace',
@@ -173,7 +173,7 @@ describe('AgentProfileService.bind', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     await ctx.get(IWireService).flush();
 
-    expect(svc.data().subagents).toEqual(['coder', 'explore', 'plan', 'reverser', 'code-reviewer']);
+    expect(svc.data().subagents).toEqual(['coder', 'explore', 'plan', 'code-reviewer']);
 
     const bindCount = persistence.records.filter((record) => record.type === 'profile.bind').length;
     await ctx.get(ISessionAgentProfileCatalog).reload();
@@ -345,42 +345,6 @@ describe('AgentProfileService.bind', () => {
     expect(ctx.get(IAgentProfileService).data().agentsMdPaths).toEqual(
       bindingRecord?.['agentsMdPaths'],
     );
-  });
-
-  it('restores a binding recorded with EnterPlanMode with its prompt and rejects the removed tool', async () => {
-    const persistence = new InMemoryWireRecordPersistence();
-    ctx = createTestAgent({ persistence }, hostEnvironmentServices(homeDir));
-    await ctx.get(IAgentProfileService).bind({ profile: DEFAULT_AGENT_PROFILE_NAME, model: MOCK_MODEL });
-    await ctx.get(IWireService).flush();
-    await ctx.dispose();
-
-    const legacyPrompt = 'Legacy system prompt recorded while EnterPlanMode existed.';
-    const legacyRecords = persistence.records.map((record) =>
-      record.type === 'profile.bind'
-        ? {
-            ...record,
-            systemPrompt: legacyPrompt,
-            activeToolNames: [
-              ...((record['activeToolNames'] as readonly string[] | undefined) ?? []),
-              'EnterPlanMode',
-            ],
-          }
-        : record,
-    );
-    ctx = createTestAgent(
-      { persistence: new InMemoryWireRecordPersistence(legacyRecords), autoConfigure: false },
-      hostEnvironmentServices(homeDir),
-    );
-    await ctx.restorePersisted();
-
-    const { profile, toolPolicy } = profileServices(ctx);
-    expect(profile.getSystemPrompt()).toBe(legacyPrompt);
-    expect(profile.getActiveToolNames()).toContain('EnterPlanMode');
-    expect(toolPolicy.isToolActive('ExitPlanMode')).toBe(true);
-    expect(await executeDirectToolCall(ctx, 'EnterPlanMode')).toMatchObject({
-      isError: true,
-      output: 'Tool "EnterPlanMode" not found',
-    });
   });
 
   it('keeps the system prompt frozen after a default bind when AGENTS.md changes', async () => {
@@ -1165,13 +1129,14 @@ describe('AgentToolPolicyService executor enforcement', () => {
   it('does not reject select_tools, the policy-gated disclosure loading entry', async () => {
     ctx = createTestAgent(hostEnvironmentServices(homeDir));
     await ctx.get(IAgentProfileService).bind({ profile: DEFAULT_AGENT_PROFILE_NAME, model: MOCK_MODEL });
+    const probe = new PolicyProbeTool(SELECT_TOOLS_TOOL_NAME);
+    ctx.get(IAgentToolRegistryService).register(probe);
 
     const result = await executeDirectToolCall(ctx, SELECT_TOOLS_TOOL_NAME);
 
-    expect(result).toMatchObject({
-      output: 'Invalid args for tool "select_tools": must have required property \'names\'',
-    });
-    expect(result.output).not.toContain('disabled by the active tool policy');
+    expect(result).toMatchObject({ output: 'executed' });
+    expect(result.isError).toBeFalsy();
+    expect(probe.calls).toBe(1);
   });
 
   it.each([
@@ -1447,7 +1412,6 @@ describe('change-notifier belief seeding', () => {
         notifyAgentsMdChanges: async () => {},
         notifySkillChanges: async () => {},
         notifySubagentChanges: async () => {},
-        notifyWorkspaceDirsChanges: async () => {},
         seedBeliefs,
         mute: () => {},
         unmute: () => {},
