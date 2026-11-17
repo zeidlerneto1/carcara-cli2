@@ -127,6 +127,24 @@ node dist/main.mjs -m carcara/qwen
 | O agente ainda mostra "thinking" | Garanta que `[thinking] enabled = false` está no `config.toml` e reinicie o processo. |
 | Modelo não encontrado | Confira o nome exato do modelo no servidor e o campo `model` no `config.toml`. |
 
+## Modo dev (sem autenticação)
+
+Se a instância Carcará aceitar requisições sem cookie (o endpoint `chat/completions` funciona só com os headers de browser, sem `PHPSESSID`), você pode configurar o harness **sem fazer login** usando o modo dev escondido:
+
+```sh
+node dist/main.mjs carcara-login --dev
+```
+
+Isso configura o provider `carcara` com os headers de browser (`Accept`, `Origin`, `Referer`, `User-Agent`) e **sem o cookie de sessão**, e define `carcara/deepseek` como modelo padrão. Nenhuma senha é pedida e nenhuma sessão é salva.
+
+Depois de rodar o `--dev`, basta iniciar o agente normalmente:
+
+```sh
+node dist/main.mjs
+```
+
+> ⚠️ O modo dev é uma flag **escondida** — ela não aparece no `carcara-login --help`. Se a sua instância exigir autenticação, use o `carcara-login --user` normal (com cookie).
+
 ## Documentação
 
 - `CARCARA-GUIDE.md` — guia detalhado do provider Carcará e do login.
