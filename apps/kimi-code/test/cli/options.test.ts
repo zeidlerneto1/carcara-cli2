@@ -605,6 +605,8 @@ describe('CLI options parsing', () => {
         'export',
         'fork',
         'provider',
+        'carcara-login',
+        'carcara-logout',
         'session',
         'acp',
         'web',

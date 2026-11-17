@@ -1,0 +1,1 @@
+Identify a binary file by running `file`, plus `readelf` for ELF or `objdump` for PE. Returns the file type, architecture, endianness, headers, and section layout. Use this before disassembling or analyzing a binary to determine its format and ABI.

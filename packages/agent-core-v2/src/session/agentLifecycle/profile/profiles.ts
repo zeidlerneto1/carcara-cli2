@@ -7,6 +7,7 @@ import {
 } from '#/app/agentProfileCatalog/profile-shared';
 
 import EXPLORE_ROLE from './explore-overlay.md?raw';
+import './reverser';
 
 const AGENT_TOOLS = [
   'Read',
@@ -84,13 +85,23 @@ const CODER_ROLE =
   'or worth follow-up. If you are stopped before finishing, the parent receives only what ' +
   'you have written so far, so keep the handoff current.';
 
+const RE_ROUTING =
+  '# Routing hints\n\n' +
+  'When a request matches one of the domains below, delegate to the `reverser` builtin subagent via the `Agent` tool (`subagent_type="reverser"`), passing the target path and the specific question. Do not attempt these analyses inline — the reverser owns the RE toolset and the session persistence.\n\n' +
+  '- **Reverse engineering** of any binary format (ELF, PE, MIPS/x86-64/ARM, firmware images): identify, disassemble, decompile → `reverser`.\n' +
+  '- **Mitigations / exploitation strategy**: NX, PIE/ASLR, RELRO, stack canary, fortify, and how to bypass them → `reverser` (it runs `Checksec` first).\n' +
+  '- **ROP / heap / format-string / ret2libc / SROP analysis** → `reverser` (gadget search via `ROP`, one-gadget offsets via `OneGadget`).\n' +
+  '- **Exploit development** — turning a completed analysis into a PoC: `reverser` + `ExploitTemplate`, then refine the rendered skeleton against the target.\n' +
+  '- **Firmware RE** (router/IoT embedded binaries): always `reverser`.\n\n' +
+  'Use `plan` / `explore` subagents **only** for pure planning or read-only exploration. Do not send RE or exploit-development work to them.';
+
 registerAgentProfile({
   name: 'agent',
   description: 'Default agent',
   tools: AGENT_TOOLS,
-  subagents: ['coder', 'explore', 'plan'],
+  subagents: ['coder', 'explore', 'plan', 'reverser'],
   renderSystemPrompt: (context) =>
-    renderSystemPromptResult('', context, { skillActive: skillActiveFor(AGENT_TOOLS) }),
+    renderSystemPromptResult(RE_ROUTING, context, { skillActive: skillActiveFor(AGENT_TOOLS) }),
 });
 
 registerAgentProfile({

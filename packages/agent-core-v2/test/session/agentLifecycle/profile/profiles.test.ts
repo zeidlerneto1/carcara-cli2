@@ -20,7 +20,22 @@ describe('builtin agent profiles', () => {
 
   it('caps the default profile delegation at non-spawning profiles', () => {
     const agent = profile('agent');
-    expect(agent.subagents).toEqual(['coder', 'explore', 'plan']);
+    expect(agent.subagents).toEqual(['coder', 'explore', 'plan', 'reverser']);
+  });
+
+  it('registers the reverser profile with the RE toolset', () => {
+    const reverser = profile('reverser');
+    expect(reverser.tools).toContain('BinIdent');
+    expect(reverser.tools).toContain('BinStrings');
+    expect(reverser.tools).toContain('Disassemble');
+    expect(reverser.tools).toContain('Emulate');
+    expect(reverser.tools).toContain('GhidraDecompile');
+    expect(reverser.tools).toContain('Checksec');
+    expect(reverser.tools).toContain('ROP');
+    expect(reverser.tools).toContain('OneGadget');
+    expect(reverser.tools).toContain('ExploitTemplate');
+    expect(reverser.tools).toContain('RefRE');
+    expect(reverser.tools).toContain('PersistSession');
   });
 
   it('keeps plan mode entry out of every builtin profile and plan review on the default one', () => {

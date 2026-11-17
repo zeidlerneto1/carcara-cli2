@@ -1,0 +1,3 @@
+Run an ELF binary under a `qemu-user` emulator and capture its output, exit code, and timeout status. This is the isolated-dynamic-execution complement to static analysis, letting you observe firmware (MIPS/ARM) behavior on the host without a production runtime.
+
+Provide the path to the ELF target. Architecture and endianness are auto-detected from the ELF header (or overridden with `arch`/`endian`); the matching qemu binary (`qemu-mips`, `qemu-mipsel`, `qemu-arm`, `qemu-i386`, `qemu-x86_64`) is chosen automatically. You may pass `args`, `stdin`, extra `env`, a `sysroot` (`-L` prefix for target libs, common for firmware), and a `timeout_ms`. The tool fails if the target is not an ELF (qemu-user cannot run PE) or if the required `qemu-*` binary is missing.

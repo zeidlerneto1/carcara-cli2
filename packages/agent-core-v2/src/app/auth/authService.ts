@@ -63,6 +63,7 @@ import {
   type ProvidersChangedEvent,
 } from '#/llm-adapter/provider/provider';
 import { isOAuthCatalogVendor } from '#/llm-adapter/provider/provider-definition';
+import { loadCarcaraSession } from '#/llm-adapter/carcara/session';
 import { ITelemetryService } from '#/app/telemetry/telemetry';
 import { IRegionService } from '#/app/region/region';
 import { kimiRegionEnv } from '#/app/region/regionService';
@@ -735,6 +736,7 @@ export class AuthSummaryService implements IAuthSummaryService {
         if (nonEmpty(token) !== undefined) return;
         throw new AuthTokenMissingError(providerKey);
       }
+      if (providerName === 'carcara' && carcaraSessionAvailable()) return;
       throw new AuthTokenMissingError(providerName);
     } catch (error) {
       this.telemetry.track2('auth_ensure_ready_failed', {
@@ -769,6 +771,14 @@ function ensureReadyFailureReason(
   if (error instanceof AuthTokenMissingError) return 'token_missing';
   if (error instanceof AuthCredentialEnvMissingError) return 'token_missing';
   return undefined;
+}
+
+function carcaraSessionAvailable(): boolean {
+  try {
+    return loadCarcaraSession() !== undefined;
+  } catch {
+    return false;
+  }
 }
 
 function classifyFailure(err: unknown): TerminalOAuthFlowStatus {

@@ -13,6 +13,8 @@ import type { LlmRequester } from '#human/llm/requester';
 import { kimiRequesters } from '#human/llm/builtin/provider/kimi/index';
 import { classifyKimiQuotaError } from '#human/llm/builtin/provider/kimi/errors';
 
+import { carcaraEndpoint, carcaraRequester } from '../carcara/trait';
+
 import type { Protocol } from '../protocol/protocol';
 import type { ModelSource } from './provider';
 
@@ -225,4 +227,11 @@ registerProviderDefinition({
   endpoint: kimiEndpoint,
   hostHeaders: 'full',
   modelSource: 'oauth-catalog',
+});
+
+registerProviderDefinition({
+  id: 'carcara',
+  baseProtocol: 'openai',
+  requester: carcaraRequester,
+  endpoint: carcaraEndpoint,
 });

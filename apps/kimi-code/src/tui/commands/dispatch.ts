@@ -45,6 +45,7 @@ import { handleGoalCommand } from './goal';
 import { handleImportSessionsCommand } from './import-sessions';
 import { handleFeedbackCommand, showMcpServers, showStatusReport, showUsage } from './info';
 import { handleAddDirCommand } from './add-dir';
+import { handleCarcaraCommand } from './carcara';
 import { parseSlashInput } from './parse';
 import { handlePluginsCommand } from './plugins';
 import { handleProviderCommand } from './provider';
@@ -83,6 +84,7 @@ export { handleBtwCommand } from './btw';
 export { handleCopyCommand } from './copy';
 export { handleDesktopCommand } from './desktop';
 export { handleAddDirCommand } from './add-dir';
+export { handleCarcaraCommand } from './carcara';
 export {
   handleCompactCommand,
   handleEditorCommand,
@@ -486,6 +488,9 @@ async function handleBuiltInSlashCommand(
       return;
     case 'provider':
       await handleProviderCommand(host, args);
+      return;
+    case 'carcara':
+      await handleCarcaraCommand(host, args);
       return;
     case 'permission':
       showPermissionPicker(host);

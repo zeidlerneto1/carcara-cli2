@@ -145,7 +145,7 @@ describe('AgentProfileService.bind', () => {
 
     await svc.bind({ profile: DEFAULT_AGENT_PROFILE_NAME, model: MOCK_MODEL });
 
-    expect(svc.data().subagents).toEqual(['coder', 'explore', 'plan', 'code-reviewer']);
+    expect(svc.data().subagents).toEqual(['coder', 'explore', 'plan', 'reverser', 'code-reviewer']);
   });
 
   it('recomputes the bound subagent allowlist when the catalog gains a profile after bind', async () => {
@@ -154,7 +154,7 @@ describe('AgentProfileService.bind', () => {
     const svc = ctx.get(IAgentProfileService);
 
     await svc.bind({ profile: DEFAULT_AGENT_PROFILE_NAME, model: MOCK_MODEL });
-    expect(svc.data().subagents).toEqual(['coder', 'explore', 'plan']);
+    expect(svc.data().subagents).toEqual(['coder', 'explore', 'plan', 'reverser']);
 
     ctx.get(IAgentProfileRegistry).register({
       sourceId: 'workspace',
@@ -173,7 +173,7 @@ describe('AgentProfileService.bind', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     await ctx.get(IWireService).flush();
 
-    expect(svc.data().subagents).toEqual(['coder', 'explore', 'plan', 'code-reviewer']);
+    expect(svc.data().subagents).toEqual(['coder', 'explore', 'plan', 'reverser', 'code-reviewer']);
 
     const bindCount = persistence.records.filter((record) => record.type === 'profile.bind').length;
     await ctx.get(ISessionAgentProfileCatalog).reload();

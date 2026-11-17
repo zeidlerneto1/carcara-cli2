@@ -4927,7 +4927,7 @@ describe('Agent tools', () => {
       `);
       expect(ctx.lastLlmInput()).toMatchInlineSnapshot(`
         system: <system-prompt>
-        tools: Agent, AgentSwarm, AskUserQuestion, Bash, CreateGoal, CronCreate, CronDelete, CronList, Edit, ExitPlanMode, FetchURL, GetGoal, Glob, Grep, Lookup, Read, SetGoalBudget, Skill, TaskList, TaskOutput, TaskStop, TodoList, UpdateGoal, WaitFor, Write
+        tools: Agent, AgentSwarm, AskUserQuestion, Bash, BinIdent, BinStrings, Checksec, CreateGoal, CronCreate, CronDelete, CronList, Disassemble, Edit, ExitPlanMode, ExploitTemplate, FetchURL, GetGoal, GhidraDecompile, Glob, Grep, Lookup, OneGadget, PersistSession, Read, RefRE, ROP, SetGoalBudget, Skill, TaskList, TaskOutput, TaskStop, TodoList, UpdateGoal, WaitFor, Write
         messages:
           user: text "Look up moon"
           user: text <auto-mode-enter-reminder>

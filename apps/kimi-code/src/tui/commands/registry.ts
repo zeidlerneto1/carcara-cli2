@@ -231,6 +231,13 @@ export const BUILTIN_SLASH_COMMANDS = [
     availability: 'always',
   },
   {
+    name: 'carcara',
+    aliases: [],
+    description: 'Set up the Carcará (Sinapad) provider without login and pick a model',
+    priority: 95,
+    availability: 'always',
+  },
+  {
     name: 'btw',
     aliases: [],
     description: 'Ask a forked side agent a question',

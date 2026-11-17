@@ -7,6 +7,7 @@ import { EXEC_SERVER_COMMAND } from './exec-server';
 import type { CLIOptions } from './options';
 import type { InstallIntent, UpdateChannel } from './update/types';
 import { registerAcpCommand } from './sub/acp';
+import { registerCarcaraCommand } from './sub/carcara';
 import { registerDoctorCommand } from './sub/doctor';
 import { registerExportCommand } from './sub/export';
 import { registerForkCommand } from './sub/fork';
@@ -145,6 +146,7 @@ export function createProgram(
   registerExportCommand(program);
   registerForkCommand(program);
   registerProviderCommand(program);
+  registerCarcaraCommand(program);
   registerSessionCommand(program);
   registerAcpCommand(program);
   registerWebCommand(program);
