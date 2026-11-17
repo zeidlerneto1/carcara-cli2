@@ -1,126 +1,137 @@
-# Kimi Code CLI
+# Carcará CLI (fork do Kimi Code)
 
-[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Docs](https://img.shields.io/badge/docs-online-blue)](https://moonshotai.github.io/kimi-code/en/) <br>
-[Documentation](https://moonshotai.github.io/kimi-code/en/) · [Issues](https://github.com/MoonshotAI/kimi-code/issues) · [中文](README.zh-CN.md)
+Este é um fork do [Kimi Code CLI](https://github.com/MoonshotAI/kimi-code), um agente de IA que roda no terminal — ele lê e edita código, executa comandos shell, busca arquivos, acessa páginas web e decide o próximo passo com base no feedback que recebe.
 
-![Demo of using Kimi Code](./docs/media/intro.gif)
+Este fork adiciona o **provider Carcará**, apontando o agente para a instância de inferência local do LNCC em `https://carcara.sinapad.lncc.br`, usando modelos como **DeepSeek-v4-Flash-0731** e **Qwen3.8-27B**.
 
-## What is Kimi Code CLI
+> ⚠️ Este é um fork pessoal, sem CI/CD configurado. Todo build e release é feito localmente.
 
-Kimi Code CLI is an AI coding agent that runs in your terminal — it can read and edit code, run shell commands, search files, fetch web pages, and choose the next step based on the feedback it receives. It works out of the box with Moonshot AI’s Kimi models and can also be configured to use other compatible providers.
+## Pré-requisitos
 
-## Install
+- **Node.js** `>= 24.15.0` (o arquivo `.nvmrc` aponta para `24.15.0`). Recomendado usar `nvm`, `fnm` ou `mise`.
+- **pnpm** `10.33.0` (definido no `packageManager` do `package.json`).
 
-Install with the official script. No Node.js required.
+> O `.npmrc` define `engine-strict=true`, então o `pnpm install` falha se a versão do Node não atender ao requisito.
 
-- **macOS or Linux**:
+## Baixar (instalação)
 
-```sh
-curl -fsSL https://code.kimi.com/kimi-code/install.sh | bash
-```
-
-- **Windows (PowerShell)**:
-
-```powershell
-irm https://code.kimi.com/kimi-code/install.ps1 | iex
-```
-
-> On Windows, install [Git for Windows](https://gitforwindows.org/) before first launch because Kimi Code CLI uses the bundled Git Bash as its shell environment. If Git Bash is installed in a custom location, set `KIMI_SHELL_PATH` to the absolute path of `bash.exe`.
-
-Then, run it with a new shell session:
+Clone este repositório e instale as dependências:
 
 ```sh
-kimi --version
-```
-
-For npm install, upgrade, uninstall, see [Getting Started](https://moonshotai.github.io/kimi-code/en/guides/getting-started).
-
-## Quick Start
-
-Open a project and start the interactive UI:
-
-```sh
-cd your-project
-kimi
-```
-
-On first launch, run `/login` inside Kimi Code CLI and choose either Kimi Code OAuth or a Moonshot AI Open Platform API key. After login, try your first task:
-
-```
-Take a look at this project and explain its main directories.
-```
-
-## Key Features
-
-- **Single-binary distribution.** Install with one command: no Node.js setup, PATH gymnastics, or global module conflicts.
-- **Blazing-fast startup.** The TUI is ready in milliseconds, so starting a session never feels heavy.
-- **Purpose-built TUI.** A carefully tuned interface, optimized end to end for long, focused agent sessions.
-- **Video input.** Drop a screen recording or demo clip into the chat and let the agent watch what is hard to describe in words — turn a reference clip into a LUT, a long video into a short, a screen recording into working code, and more.
-- **AI-native MCP configuration.** Add, edit, and authenticate Model Context Protocol servers conversationally with `/mcp-config`, without hand-editing JSON.
-- **Rich plugin ecosystem.** Install skills, MCP servers, and data sources from the marketplace or any GitHub repo, with each install's trust level surfaced up front.
-- **Subagents for focused, parallel work.** Dispatch built-in `coder`, `explore`, and `plan` subagents in isolated contexts while keeping the main conversation clean.
-- **Lifecycle hooks.** Run local commands at key points to gate risky tool calls, audit decisions, trigger desktop notifications, or connect to your own automation.
-- **Editor & IDE integration (ACP).** Drive a Kimi Code CLI session straight from Zed, JetBrains, or any [Agent Client Protocol](https://agentclientprotocol.com/) client with `kimi acp`.
-
-## Use it in your editor (ACP)
-
-Kimi Code CLI speaks the [Agent Client Protocol](https://agentclientprotocol.com/), so ACP-compatible editors and IDEs (Zed, JetBrains, …) can drive a session over stdio. Log in once, then point your editor at the `kimi acp` subcommand — no extra login needed.
-
-For Zed, add this to `~/.config/zed/settings.json`:
-
-```json
-{
-  "agent_servers": {
-    "Kimi Code CLI": {
-      "type": "custom",
-      "command": "kimi",
-      "args": ["acp"],
-      "env": {}
-    }
-  }
-}
-```
-
-Then open a new conversation in Zed's Agent panel. See [Using in IDEs](https://moonshotai.github.io/kimi-code/en/guides/ides) for JetBrains setup and troubleshooting, and the [`kimi acp` reference](https://moonshotai.github.io/kimi-code/en/reference/kimi-acp) for the full capability matrix.
-
-## Docs
-
-- [Getting Started](https://moonshotai.github.io/kimi-code/en/guides/getting-started)
-- [Interaction and approvals](https://moonshotai.github.io/kimi-code/en/guides/interaction)
-- [Sessions](https://moonshotai.github.io/kimi-code/en/guides/sessions)
-- [Using in IDEs (ACP)](https://moonshotai.github.io/kimi-code/en/guides/ides)
-- [Configuration](https://moonshotai.github.io/kimi-code/en/configuration/config-files)
-- [Command reference](https://moonshotai.github.io/kimi-code/en/reference/kimi-command)
-
-## Develop
-
-Requirements: Node.js ≥ 24.15.0, pnpm 10.33.0.
-
-```sh
-git clone https://github.com/MoonshotAI/kimi-code.git
-cd kimi-code
+git clone https://github.com/zeidlerneto1/carcara-cli2.git
+cd carcara-cli2
 pnpm install
 ```
 
+Compile o binário do CLI (gera `apps/kimi-code/dist/main.mjs`):
+
 ```sh
-pnpm dev:cli    # run the CLI in dev mode
-pnpm test       # run tests
-pnpm typecheck  # TypeScript check
-pnpm lint       # oxlint
-pnpm build      # build all packages
+pnpm -C apps/kimi-code run build
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution guide.
+## Login no Carcará
 
-## Community
+Antes de usar, faça login com o seu usuário no Carcará:
 
-- [Issues](https://github.com/MoonshotAI/kimi-code/issues)
-- For security vulnerabilities, see [SECURITY.md](SECURITY.md).
+```sh
+cd apps/kimi-code
+node dist/main.mjs carcara-login --user SEU_USUARIO
+```
 
-## Acknowledgements
+Isso preenche automaticamente o cookie de sessão na configuração. Para sair:
 
-Our TUI is built on top of [`pi-tui`](https://github.com/earendil-works/pi-mono/tree/main/packages/tui). We thank the authors of `pi-tui` for their valuable work.
+```sh
+node dist/main.mjs carcara-logout
+```
 
-## License
+## Configurar o harness (config.toml)
 
-Released under the [MIT License](LICENSE).
+O harness (o agente) é configurado pelo arquivo `~/.kimi-code/config.toml`. Crie (ou edite) esse arquivo com o conteúdo abaixo, ajustando o `Cookie` com a sua sessão:
+
+```toml
+default_model = "carcara/deepseek"
+default_thinking = false
+default_yolo = false
+skip_afk_prompt_injection = false
+default_plan_mode = false
+default_editor = ""
+theme = "dark"
+show_thinking_stream = true
+hooks = []
+merge_all_available_skills = true
+extra_skill_dirs = []
+telemetry = true
+
+[providers.carcara]
+base_url = "https://carcara.sinapad.lncc.br/service/v1"
+type = "carcara"
+
+[providers.carcara.custom_headers]
+Accept = "*/*"
+Accept-Language = "en-US,en;q=0.9,pt;q=0.8"
+Referer = "https://carcara.sinapad.lncc.br/service/"
+User-Agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
+Origin = "https://carcara.sinapad.lncc.br"
+Cookie = "PHPSESSID=<SUA_SESSAO>"
+
+[models."carcara/deepseek"]
+provider = "carcara"
+model = "DeepSeek-v4-Flash-0731"
+max_context_size = 200000
+capabilities = [ "thinking" ]
+
+[models."carcara/qwen"]
+provider = "carcara"
+model = "Qwen3.8-27B"
+max_context_size = 200000
+capabilities = [ "image_in", "video_in" ]
+
+[thinking]
+enabled = false
+
+[secondary_model]
+default_model = "carcara/qwen"
+```
+
+### Explicando os campos principais
+
+- **`default_model`** — modelo usado por padrão. Aqui, `carcara/deepseek`.
+- **`[providers.carcara]`** — define o endpoint e o tipo de provider. O `base_url` aponta para a API compatível com OpenAI do Carcará.
+- **`[providers.carcara.custom_headers]`** — headers HTTP enviados nas requisições. O `Cookie` (`PHPSESSID`) autentica você na instância; o `carcara-login` preenche isso automaticamente.
+- **`[models."carcara/deepseek"]` / `[models."carcara/qwen"]`** — registram os modelos disponíveis, com o nome real usado na API (`model`) e as capacidades suportadas (`thinking`, `image_in`, `video_in`).
+- **`[thinking]`** — `enabled = false` desativa o modo de raciocínio (thinking) por padrão. Se você preferir que o agente raciocine antes de responder, mude para `true` (ou omita a seção).
+- **`[secondary_model]`** — modelo auxiliar usado para tarefas menores, como gerar títulos de sessão.
+
+> ⚠️ **Nunca compartilhe o seu `config.toml`** — ele contém o seu cookie de sessão, que é uma credencial.
+
+## Rodar
+
+Na pasta `apps/kimi-code`:
+
+```sh
+node dist/main.mjs
+```
+
+Isso abre a interface (TUI) do agente. Para trocar de modelo na hora:
+
+```sh
+node dist/main.mjs -m carcara/qwen
+```
+
+### Solução de problemas rápida
+
+| Problema | Solução |
+| --- | --- |
+| `pnpm install` falha | Confira a versão do Node (`node -v`) e use `nvm use 24.15.0` ou equivalente. |
+| Erro de autenticação / sessão expirada | Rode `node dist/main.mjs carcara-login --user SEU_USUARIO` de novo. |
+| O agente ainda mostra "thinking" | Garanta que `[thinking] enabled = false` está no `config.toml` e reinicie o processo. |
+| Modelo não encontrado | Confira o nome exato do modelo no servidor e o campo `model` no `config.toml`. |
+
+## Documentação
+
+- `CARCARA-GUIDE.md` — guia detalhado do provider Carcará e do login.
+- `docs/` — documentação completa do Kimi Code CLI (a documentação oficial do upstream).
+
+## Licença
+
+Este projeto é distribuído sob a licença [MIT](LICENSE), conforme o repositório original.
